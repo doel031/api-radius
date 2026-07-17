@@ -22,6 +22,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents("php://input"), true);
 $action = isset($input['action']) ? strtolower($input['action']) : '';
 
+if (empty($action)) {
+    http_response_code(400);
+    $err_msg = "Parameter 'action' wajib diisi (add, get, update, delete).";
+    writeAPILog($conn, 'nas.php', 400, 'error', $err_msg);
+    echo json_encode(["status" => "error", "error_code" => "MISSING_ACTION", "message" => $err_msg]);
+    exit();
+}
+
 try {
     switch ($method) {
         case 'POST':
@@ -47,7 +55,7 @@ try {
             if ($type === 'voucher' && (empty($time_limit) && (empty($quota_down) || empty($quota_up)))) {
                 throw new Exception("Parameter 'time_limit' atau paket kuota ('quota_down' & 'quota_up') wajib diisi untuk tipe 'voucher'.");
             }
-            
+
             $conn->begin_transaction();
 
             // 1. Atribut Identitas: Profil Device (Mikrotik-Group)
@@ -190,6 +198,7 @@ try {
 
             // 1. Validasi Parameter Wajib
             $required_params = ['group_name', 'device_profile', 'type'];
+            
             foreach ($required_params as $param) {
                 if (empty($input[$param])) {
                     http_response_code(400);

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
- <meta charset="UTF-8"><title>📡 Endpoint Isolate - GSMNET</title>
- <link rel="stylesheet" href="style-doc.php">
+  <meta charset="UTF-8"><title>📡 Endpoint Isolate - GSMNET</title>
+  <link rel="stylesheet" href="style-doc.php">
 </head>
 <body>
 <div class="container">
  <a href="../index.php" class="back-btn">&larr; Kembali ke Hub Utama</a>
- <h1>📡 1. Endpoint Isolate (Manajemen Akun)</h1>
+ <h1>📡 Endpoint Isolate (Manajemen Akun)</h1>
  <p>Digunakan untuk isolir tunggakan (shutdown), penonaktifan kontrak (off), memulihkan paket (restore), atau menghapus akun massal (delete).</p>
 
  <div class="endpoint-box blue">

@@ -7,12 +7,12 @@
 <body>
 <div class="container">
  <a href="../index.php" class="back-btn">&larr; Kembali ke Hub Utama</a>
- <h1>🔍 3. Endpoint Check Status</h1>
+ <h1>🔍 Endpoint Check Status</h1>
  <p>Endpoint fleksibel untuk memantau performa jaringan total atau memeriksa profil akun individu secara real-time.</p>
 
  <div class="endpoint-box blue">
  <span class="method blue">POST</span>
- <span class="url">/api/v1/check_status.php</span>
+ <span class="url">/api/v1/status.php</span>
  </div>
 
  <h2>💻 Contoh Payload & Respon</h2>

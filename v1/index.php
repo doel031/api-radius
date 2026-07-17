@@ -46,24 +46,19 @@ $baseUrl = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']) 
 	    <p>Manajemen lengkap (CRUD) pendaftaran profil paket baru untuk membedakan perlakuan antara user reguler dan user voucher.</p>
 	</a>
 
+    <a href="doc/users.php" class="menu-card">
+        <h2>👤 Endpoint User Management</h2>
+        <p>Manajemen lengkap (CRUD) pendaftaran profil paket baru untuk membedakan perlakuan antara user reguler dan user voucher.</p>
+    </a>
+
 	<a href="doc/isolate.php" class="menu-card">
-            <h2>📡 1. Endpoint Isolate</h2>
-            <p>Manajemen status pemutusan akun otomatis (tunggakan/off), pemulihan paket pelanggan, dan interaksi kick-session MikroTik.</p>
+            <h2>📡 Endpoint Isolate</h2>
+            <p>Manajemen status pemutusan akun otomatis (tunggakan/off), pemulihan paket pelanggan, dan interaksi kick-session.</p>
         </a>
 
-        <a href="doc/add_user.php" class="menu-card">
-            <h2>👤 2. Endpoint Add User</h2>
-            <p>Registrasi pendaftaran data kredensial pelanggan baru tipe PPPoE/Single secara sinkron ke dalam tabel core database FreeRADIUS.</p>
-        </a>
-
-        <a href="doc/check_status.php" class="menu-card">
-            <h2>🔍 3. Endpoint Check Status</h2>
+        <a href="doc/status.php" class="menu-card">
+            <h2>🔍 Endpoint Check Status</h2>
             <p>Monitoring kapasitas infrastruktur jaringan internal secara global, verifikasi status online/offline, dan informasi detail session target user.</p>
-        </a>
-
-        <a href="doc/add_voucher.php" class="menu-card">
-            <h2>🎫 4. Endpoint Add Voucher</h2>
-            <p>Pembuatan kode kupon hotspot sekali pakai dengan batasan rentang waktu operasional hari kerja (workdays) & skema hitung mundur.</p>
         </a>
 
     </div>
