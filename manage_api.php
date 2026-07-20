@@ -10,8 +10,8 @@ $message = "";
 if (isset($_POST['action']) && $_POST['action'] == 'generate') {
     $client_name = $conn->real_escape_string($_POST['client_name']);
     $allowed_ip = $conn->real_escape_string(trim($_POST['allowed_ip']));
-    $new_key = bin2hex(random_bytes(16)); 
-    
+    $new_key = bin2hex(random_bytes(16));
+
     if (!empty($client_name) && !empty($allowed_ip)) {
         $sql = "INSERT INTO api_keys (client_name, api_key, allowed_ip) VALUES ('$client_name', '$new_key', '$allowed_ip')";
         if ($conn->query($sql)) {
@@ -41,7 +41,7 @@ if (isset($_GET['unblock'])) {
 if (isset($_GET['fetch_part']) && $_GET['fetch_part'] == 'banned') {
     $blocked_res = $conn->query("SELECT * FROM api_failed_attempts WHERE total_banned_count > 0 ORDER BY id DESC");
     if ($blocked_res && $blocked_res->num_rows > 0) {
-        while($block = $blocked_res->fetch_assoc()) {
+        while ($block = $blocked_res->fetch_assoc()) {
             echo "<tr>
                     <td data-label='Client ID'><strong style='color:#c53030;'>" . htmlspecialchars($block['client_id']) . "</strong></td>
                     <td data-label='IP Address'><span class='ip-badge' style='background:#fed7d7; color:#9b2c2c; border: 1px solid #feb2b2;'>" . htmlspecialchars($block['ip_address']) . "</span></td>
@@ -148,7 +148,7 @@ $blocked_res  = $conn->query("SELECT * FROM api_failed_attempts WHERE total_bann
             </thead>
             <tbody>
                 <?php if ($api_keys_res && $api_keys_res->num_rows > 0): ?>
-                    <?php while($row = $api_keys_res->fetch_assoc()): ?>
+                    <?php while ($row = $api_keys_res->fetch_assoc()): ?>
                         <tr>
                             <td data-label="Client ID"><strong><?php echo htmlspecialchars($row['client_name']); ?></strong></td>
                             <td data-label="Secret Key"><span class="key-badge"><?php echo $row['api_key']; ?></span></td>
@@ -174,7 +174,7 @@ $blocked_res  = $conn->query("SELECT * FROM api_failed_attempts WHERE total_bann
             </thead>
             <tbody id="banned-tbody">
                 <?php if ($blocked_res && $blocked_res->num_rows > 0): ?>
-                    <?php while($block = $blocked_res->fetch_assoc()): ?>
+                    <?php while ($block = $blocked_res->fetch_assoc()): ?>
                         <tr>
                             <td data-label="Client ID"><strong style="color:#c53030;"><?php echo htmlspecialchars($block['client_id']); ?></strong></td>
                             <td data-label="IP Address"><span class="ip-badge" style="background:#fed7d7; color:#9b2c2c; border: 1px solid #feb2b2;"><?php echo htmlspecialchars($block['ip_address']); ?></span></td>

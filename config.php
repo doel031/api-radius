@@ -1,10 +1,11 @@
 <?php
+
 define('DB_HOST', 'localhost');
 define('DB_USER', 'raduser');
 define('DB_PASS', 'radpass');
 define('DB_NAME', 'raddb');
 
-define('API_DEFAULT_SECRET', 'testing123'); 
+define('API_DEFAULT_SECRET', 'testing123');
 define('HMAC_TIME_WINDOW', 300); // Toleransi waktu request maksimal 5 menit (300 detik)
 define('API_DEBUG_MODE', true);
 
@@ -18,12 +19,14 @@ $GLOBALS['__log_buffer'] = [
 ];
 
 // urutan severity, dipakai untuk menentukan level akhir (yang tertinggi yang menang)
-function levelPriority($level) {
+function levelPriority($level)
+{
     $order = ['DEBUG' => 0, 'INFO' => 1, 'WARNING' => 2, 'ERROR' => 3];
     return $order[$level] ?? 1;
 }
 
-function getDBConnection() {
+function getDBConnection()
+{
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if ($conn->connect_error) {
         http_response_code(500);
@@ -36,7 +39,8 @@ function getDBConnection() {
 /**
  * Catat log ke buffer (BELUM insert ke DB)
  */
-function writeAPILog($conn, $endpoint, $http_status, $level, $message, $payload = null) {
+function writeAPILog($conn, $endpoint, $http_status, $level, $message, $payload = null)
+{
     $buf = &$GLOBALS['__log_buffer'];
 
     // DEBUG note selalu dikumpulkan (tapi hanya benar-benar dipakai kalau API_DEBUG_MODE true)
@@ -70,7 +74,8 @@ function writeAPILog($conn, $endpoint, $http_status, $level, $message, $payload 
  * Tulis SATU baris log ke DB, gabungan dari semua writeAPILog() sepanjang request ini.
  * WAJIB dipanggil sekali di akhir script (sebelum $conn->close()).
  */
-function flushAPILog($conn) {
+function flushAPILog($conn)
+{
     $buf = $GLOBALS['__log_buffer'];
 
     // VALIDASI: pastikan log_level HANYA salah satu dari 4 nilai yang diizinkan
@@ -97,8 +102,16 @@ function flushAPILog($conn) {
 
         $stmt->bind_param(
             "sssssissss",
-            $clientId, $ip, $endpoint, $method, $level, $httpStatus,
-            $buf['action'], $buf['payload'], $debugInfo, $buf['error']
+            $clientId,
+            $ip,
+            $endpoint,
+            $method,
+            $level,
+            $httpStatus,
+            $buf['action'],
+            $buf['payload'],
+            $debugInfo,
+            $buf['error']
         );
         $stmt->execute();
         $stmt->close();
@@ -107,5 +120,3 @@ function flushAPILog($conn) {
         error_log("flushAPILog gagal: " . $e->getMessage());
     }
 }
-
-?>

@@ -12,16 +12,16 @@ $conn = getDBConnection();
 if (isset($_GET['fetch_part']) && $_GET['fetch_part'] == 'logs') {
     $logs_res = $conn->query("SELECT * FROM api_request_logs ORDER BY id DESC LIMIT 50");
     if ($logs_res && $logs_res->num_rows > 0) {
-        while($log = $logs_res->fetch_assoc()) {
+        while ($log = $logs_res->fetch_assoc()) {
             $json_data = json_decode($log['payload'], true);
             $pretty_json = $json_data ? json_encode($json_data, JSON_PRETTY_PRINT) : htmlspecialchars($log['payload']);
             $status_class = ($log['http_status'] == 200) ? 'status-200' : 'status-error';
             $error_col = $log['error_details'] ? htmlspecialchars($log['error_details']) : '<span style="color:#48bb78;">✔ Success / OK</span>';
-            
+
             // Penentuan Kategori Log Level secara otomatis berdasarkan data database
             $http = intval($log['http_status']);
             $has_error = !empty($log['error_details']);
-            
+
             if ($http >= 500 || $has_error) {
                 $level = 'error';
             } elseif ($http >= 400 && $http < 500) {
@@ -229,20 +229,20 @@ $logs_res = $conn->query("SELECT * FROM api_request_logs ORDER BY id DESC LIMIT 
             </thead>
             <tbody id="log-tbody">
                 <?php if ($logs_res && $logs_res->num_rows > 0): ?>
-                    <?php while($log = $logs_res->fetch_assoc()): ?>
+                    <?php while ($log = $logs_res->fetch_assoc()): ?>
                         <?php
                             $http = intval($log['http_status']);
-                            $has_error = !empty($log['error_details']);
-                            
-                            if ($http >= 500 || $has_error) {
-                                $level = 'error';
-                            } elseif ($http >= 400 && $http < 500) {
-                                $level = 'warning';
-                            } elseif ($http == 200 && $log['method'] == 'GET') {
-                                $level = 'debug';
-                            } else {
-                                $level = 'info';
-                            }
+                        $has_error = !empty($log['error_details']);
+
+                        if ($http >= 500 || $has_error) {
+                            $level = 'error';
+                        } elseif ($http >= 400 && $http < 500) {
+                            $level = 'warning';
+                        } elseif ($http == 200 && $log['method'] == 'GET') {
+                            $level = 'debug';
+                        } else {
+                            $level = 'info';
+                        }
                         ?>
                         <tr class="searchable-row" data-level="<?php echo $level; ?>">
                             <td class="time-col" data-label="Waktu / Client / IP">
@@ -259,10 +259,10 @@ $logs_res = $conn->query("SELECT * FROM api_request_logs ORDER BY id DESC LIMIT 
                                 <span class="status-badge <?php echo ($log['http_status'] == 200) ? 'status-200' : 'status-error'; ?>">HTTP <?php echo $log['http_status']; ?></span>
                             </td>
                             <td data-label="Payload Terkirim" class="payload-cell">
-                                <pre><?php 
+                                <pre><?php
                                     $json_data = json_decode($log['payload'], true);
-                                    echo $json_data ? json_encode($json_data, JSON_PRETTY_PRINT) : htmlspecialchars($log['payload']); 
-                                ?></pre>
+                        echo $json_data ? json_encode($json_data, JSON_PRETTY_PRINT) : htmlspecialchars($log['payload']);
+                        ?></pre>
                             </td>
                             <td data-label="Detail Error / Keterangan" class="error-text-cell">
                                 <?php echo $log['error_details'] ? htmlspecialchars($log['error_details']) : '<span style="color:#48bb78;">✔ Success / OK</span>'; ?>

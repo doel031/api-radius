@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Mencatat aktivitas request API ke tabel api_request_logs
  *
@@ -9,7 +10,8 @@
  * @param int    $http_status    Kode HTTP response (200, 400, 401, dst)
  * @param string|null $error_details  Pesan error jika ada, null jika sukses
  */
-function logApiRequest($conn, $client_id, $action, $payload, $http_status, $error_details = null) {
+function logApiRequest($conn, $client_id, $action, $payload, $http_status, $error_details = null)
+{
     // ambil method otomatis dari request yang sedang berjalan
     $method   = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
     $endpoint = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);

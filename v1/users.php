@@ -1,4 +1,5 @@
 <?php
+
 header("Content-Type: application/json");
 
 // Load Konfigurasi & Validator HMAC
@@ -7,7 +8,7 @@ include_once(dirname(__FILE__) . "/../hmac_validator.php");
 
 $conn = getDBConnection();
 
-register_shutdown_function(function() use ($conn) {
+register_shutdown_function(function () use ($conn) {
     flushAPILog($conn);
     $conn->close();   // ditutup di sini, setelah flush selesai
 });
@@ -46,7 +47,7 @@ switch ($method) {
         }
 
         if (!empty($input['username']) && !empty($input['password']) && !empty($input['group_name'])) {
-            
+
             $username = mysqli_real_escape_string($conn, $input['username']);
             $password = mysqli_real_escape_string($conn, $input['password']);
             $group_name = mysqli_real_escape_string($conn, $input['group_name']);
@@ -90,9 +91,9 @@ switch ($method) {
         }
         break;
 
-    // ==========================================
-    // FILTER: METHOD GET
-    // ==========================================
+        // ==========================================
+        // FILTER: METHOD GET
+        // ==========================================
     case 'GET':
         if ($action !== 'get') {
             http_response_code(400);
@@ -116,12 +117,12 @@ switch ($method) {
         }
 
         $username = $conn->real_escape_string($input['username'] ?? '');
-        
+
         $query = "SELECT radcheck.username as username, radcheck.value as password, radusergroup.groupname as group_name
                     FROM radcheck
                     LEFT JOIN radusergroup ON radcheck.username = radusergroup.username 
                     WHERE radcheck.attribute = 'Cleartext-Password'";
-        
+
         // Karena GET request ini membaca action dari body JSON, username juga dilewatkan di JSON body
         if (!empty($input['username'])) {
             $query .= " AND radcheck.username = '$username'";
@@ -151,9 +152,9 @@ switch ($method) {
         }
         exit();
 
-    // ==========================================
-    // FILTER: METHOD PUT
-    // ==========================================
+        // ==========================================
+        // FILTER: METHOD PUT
+        // ==========================================
     case 'PUT':
         if ($action !== 'update') {
             http_response_code(400);
@@ -162,11 +163,11 @@ switch ($method) {
             echo json_encode(["status" => "error", "error_code" => "INVALID_ACTION", "message" => $err_msg]);
             exit();
         }
-            
+
         $username = mysqli_real_escape_string($conn, $input['username']);
         $password = mysqli_real_escape_string($conn, $input['password']) ?? null;
         $group_name = mysqli_real_escape_string($conn, $input['group_name']) ?? null;
-        
+
         if (empty($username)) {
             http_response_code(400);
             $err_msg = "Parameter username tidak ada.";
@@ -181,7 +182,7 @@ switch ($method) {
             $error_level = "WARNING";
             throw new Exception("Gagal memperbarui data. Pengguna dengan Username '$username' tidak ditemukan.");
         }
-        
+
         if (empty($password) && empty($group_name)) {
             http_response_code(400);
             $err_msg = "Parameter password atau group_name tidak ada.";
@@ -189,7 +190,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "error_code" => "INVALID_PARAMETER", "message" => $err_msg]);
             exit();
         }
-        
+
         mysqli_begin_transaction($conn);
 
         if (!empty($password)) {
@@ -209,9 +210,9 @@ switch ($method) {
 
         break;
 
-    // ==========================================
-    // FILTER: METHOD DELETE
-    // ==========================================
+        // ==========================================
+        // FILTER: METHOD DELETE
+        // ==========================================
     case 'DELETE':
         if ($action !== 'delete') {
             http_response_code(400);
@@ -222,14 +223,14 @@ switch ($method) {
         }
 
         $username = mysqli_real_escape_string($conn, $input['username']);
-        if (empty($username) ) {
+        if (empty($username)) {
             http_response_code(400);
             $err_msg = "Parameter username tidak ada.";
             // writeAPILog($conn, '/api/v1/users.php', 400, 'WARNING', $err_msg);
             echo json_encode(["status" => "error", "error_code" => "INVALID_PARAMETER", "message" => $err_msg]);
             exit();
         }
-        
+
         $check_username = $conn->query("SELECT username FROM radcheck WHERE username = '$username' LIMIT 1");
         if (!$check_username || $check_username->num_rows === 0) {
             http_response_code(400);
@@ -238,9 +239,9 @@ switch ($method) {
             echo json_encode(["status" => "error", "error_code" => "USER_NOT_FOUND", "message" => $err_msg]);
             exit();
         }
-          
+
         $username = mysqli_real_escape_string($conn, $input['username']);
-        
+
         mysqli_begin_transaction($conn);
 
         // 1. Hapus dari radcheck
@@ -266,5 +267,3 @@ switch ($method) {
         echo json_encode(["status" => "error", "error_code" => "INVALID_METHOD", "message" => "Method tidak diizinkan."]);
         break;
 }
-
-?>

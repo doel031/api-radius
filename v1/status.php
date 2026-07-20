@@ -1,4 +1,5 @@
 <?php
+
 header("Content-Type: application/json");
 
 // 1. Load Konfigurasi & Validator HMAC Terpusat
@@ -16,9 +17,14 @@ $username_input  = isset($input['username']) ? trim($input['username']) : '';
 $usernames_input = isset($input['usernames']) ? $input['usernames'] : [];
 
 // Fungsi bantu untuk memetakan nama grup RADIUS ke status administratif GSMNET
-function mapAccountStatus($groupname) {
-    if ($groupname === 'ISOLIREBILLING') return 'isolir';
-    if ($groupname === 'OFF') return 'off';
+function mapAccountStatus($groupname)
+{
+    if ($groupname === 'ISOLIREBILLING') {
+        return 'isolir';
+    }
+    if ($groupname === 'OFF') {
+        return 'off';
+    }
     return 'aktif';
 }
 
@@ -26,16 +32,20 @@ function mapAccountStatus($groupname) {
 // MODE 1: DEFAULT VIEW (Scan Otomatis Semua Grup & Paket Terdaftar)
 // =========================================================================
 if (empty($username_input) && empty($usernames_input)) {
-    
+
     // a. Hitung total user yang sedang ONLINE real-time
     $total_online = 0;
     $res_online = $conn->query("SELECT COUNT(DISTINCT username) as online FROM radacct WHERE acctstoptime IS NULL");
-    if ($res_online) { $total_online = intval($res_online->fetch_assoc()['online']); }
+    if ($res_online) {
+        $total_online = intval($res_online->fetch_assoc()['online']);
+    }
 
     // b. Hitung total seluruh akun yang terdaftar di sistem radusergroup
     $total_accounts = 0;
     $res_total = $conn->query("SELECT COUNT(DISTINCT username) as total FROM radusergroup");
-    if ($res_total) { $total_accounts = intval($res_total->fetch_assoc()['total']); }
+    if ($res_total) {
+        $total_accounts = intval($res_total->fetch_assoc()['total']);
+    }
 
     // c. Kalkulasi total user yang OFFLINE (Total Akun - Yang Sedang Online)
     $total_offline = max(0, $total_accounts - $total_online);
@@ -43,25 +53,25 @@ if (empty($username_input) && empty($usernames_input)) {
     // d. SCANNING DINAMIS: Ambil semua groupname yang ada di tabel radusergroup
     $grup_details = [];
     $res_grup = $conn->query("SELECT groupname, COUNT(username) as jumlah FROM radusergroup GROUP BY groupname ORDER BY jumlah DESC");
-    
+
     if ($res_grup) {
         while ($row = $res_grup->fetch_assoc()) {
             $grup_name = $row['groupname'];
-            
+
             // Pemetaan (Mapping) khusus untuk grup sistem agar rapi di JSON Billing
             if ($grup_name === 'ISOLIREBILLING') {
                 $grup_name = 'isolir';
             } elseif ($grup_name === 'OFF') {
                 $grup_name = 'off';
             }
-            
+
             // Otomatis memasukkan grup apa pun (termasuk jika ada grup tambahan baru)
             $grup_details[$grup_name] = intval($row['jumlah']);
         }
     }
 
     writeAPILog($conn, 'check_status.php', 200, 'completed', 'Dinamis scanning semua paket dan grup RADIUS');
-    
+
     echo json_encode([
         "status" => "success",
         "mode" => "default_summary",
@@ -72,7 +82,7 @@ if (empty($username_input) && empty($usernames_input)) {
         ],
         "detail_per_paket" => $grup_details
     ]);
-    
+
     $conn->close();
     exit();
 }
@@ -82,7 +92,7 @@ if (empty($username_input) && empty($usernames_input)) {
 // =========================================================================
 if (!empty($username_input)) {
     $username = $conn->real_escape_string($username_input);
-    
+
     $res_profile = $conn->query("SELECT groupname FROM radusergroup WHERE username = '$username' LIMIT 1");
     if (!$res_profile || $res_profile->num_rows === 0) {
         http_response_code(404);
@@ -90,12 +100,12 @@ if (!empty($username_input)) {
         echo json_encode(["status" => "error", "message" => "Username tidak terdaftar di database RADIUS."]);
         exit();
     }
-    
+
     $groupname = $res_profile->fetch_assoc()['groupname'];
     $account_status = mapAccountStatus($groupname);
 
     $res_session = $conn->query("SELECT nasipaddress, acctstarttime, framedipaddress, callingstationid FROM radacct WHERE username = '$username' AND acctstoptime IS NULL ORDER BY radacctid DESC LIMIT 1");
-    
+
     $is_online = false;
     $session_details = null;
 
@@ -112,7 +122,7 @@ if (!empty($username_input)) {
     }
 
     writeAPILog($conn, 'check_status.php', 200, 'completed', 'Fetch single user status');
-    
+
     echo json_encode([
         "status" => "success",
         "mode" => "single_user",
@@ -131,17 +141,19 @@ if (!empty($username_input)) {
 // =========================================================================
 if (!empty($usernames_input) && is_array($usernames_input)) {
     $results = [];
-    
+
     foreach ($usernames_input as $raw_user) {
         $username = $conn->real_escape_string(trim($raw_user));
-        if (empty($username)) continue;
+        if (empty($username)) {
+            continue;
+        }
 
         $res_p = $conn->query("SELECT groupname FROM radusergroup WHERE username = '$username' LIMIT 1");
         if (!$res_p || $res_p->num_rows === 0) {
             $results[$username] = ["registered" => false, "account_status" => "not_found", "network_status" => "offline"];
             continue;
         }
-        
+
         $groupname = $res_p->fetch_assoc()['groupname'];
         $res_s = $conn->query("SELECT radacctid FROM radacct WHERE username = '$username' AND acctstoptime IS NULL LIMIT 1");
         $online_status = ($res_s && $res_s->num_rows > 0) ? "online" : "offline";
@@ -155,7 +167,7 @@ if (!empty($usernames_input) && is_array($usernames_input)) {
     }
 
     writeAPILog($conn, 'check_status.php', 200, 'completed', 'Fetch bulk users status');
-    
+
     echo json_encode([
         "status" => "success",
         "mode" => "bulk_user",
