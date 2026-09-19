@@ -27,13 +27,16 @@ class HmacAuthenticate
         }
 
         // 3. Cari API Key dari Database
-        $clientKey = ApiKey::where('id', $clientId)
-            ->orWhere('name', $clientId)
-            ->where('is_active', true)
-            ->first();
+        $clientKey = ApiKey::where(function ($query) use ($clientId) {
+            $query->where('id', $clientId)
+                  ->orWhere('name', $clientId)
+                  ->orWhere('key', $clientId);
+        })
+        ->where('is_active', true)
+        ->first();
 
-        if (!$clientKey) {
-            return $this->responseAndLog($request, 'API Key / Client ID tidak valid atau tidak aktif', 401, $clientId);
+        if (!$clientKey || !$clientKey->is_active) {
+            return $this->responseAndLog($request, 'API Key / Client ID tidak valid atau telah dinonaktifkan (revoked)', 401, $clientId);
         }
 
         // 4. Cek Masa Kadaluarsa
