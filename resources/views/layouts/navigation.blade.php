@@ -13,28 +13,31 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <!-- Menu Dashboard -->
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('admin.dashboard')">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
                     <!-- Menu Dropdown Admin -->
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="right" width="48">
+                    @php
+                        $isAdminActive = request()->routeIs('admin.*');
+                    @endphp
+                    <div class="inline-flex items-center sm:-my-px">
+                        <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
-                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md focus:outline-none transition ease-in-out duration-150">
-                                    <div>Admin</div>
+                                <button class="inline-flex items-center px-1 pt-1 border-b-2 {{ $isAdminActive ? 'border-indigo-400 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 h-16 focus:outline-none transition duration-150 ease-in-out">
+                                    <span>Admin</span>
 
-                                    <div class="ms-1">
+                                    <span class="ms-1">
                                         <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                         </svg>
-                                    </div>
+                                    </span>
                                 </button>
                             </x-slot>
 
                             <x-slot name="content">
                                 <!-- Submenu Manage API -->
-                                <x-dropdown-link :href="route('admin.apikeys.index')">
+                                <x-dropdown-link :href="route('admin.apikeys.index')" :active="request()->routeIs('admin.apikeys.*')">
                                     {{ __('Manage API') }}
                                 </x-dropdown-link>
                             </x-slot>
