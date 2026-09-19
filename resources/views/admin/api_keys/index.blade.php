@@ -191,36 +191,36 @@
 
                             <!-- Scopes -->
                             <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                                <span class="block text-xs font-semibold text-slate-700 mb-1.5">
                                     Scope Permissions <span class="text-[11px] text-slate-400 font-normal">(Kosongkan untuk All)</span>
-                                </label>
+                                </span>
                                 <div class="space-y-2 bg-slate-50/70 p-3 rounded-xl border border-slate-200/80">
-                                    <label class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
-                                        <input type="checkbox" name="scopes[]" value="nas:manage" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                    <label for="scope_nas" class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
+                                        <input id="scope_nas" type="checkbox" name="scopes[]" value="nas:manage" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                         <div>
                                             <span class="text-xs font-semibold text-slate-700 block">NAS Management</span>
                                             <span class="text-[10px] text-slate-400">Akses penuh CRUD router & hot-reload</span>
                                         </div>
                                     </label>
 
-                                    <label class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
-                                        <input type="checkbox" name="scopes[]" value="users:manage" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                    <label for="scope_users" class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
+                                        <input id="scope_users" type="checkbox" name="scopes[]" value="users:manage" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                         <div>
                                             <span class="text-xs font-semibold text-slate-700 block">Users & Groups</span>
                                             <span class="text-[10px] text-slate-400">CRUD user PPPoE, password, dan profil</span>
                                         </div>
                                     </label>
 
-                                    <label class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
-                                        <input type="checkbox" name="scopes[]" value="isolate:execute" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                    <label for="scope_isolate" class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
+                                        <input id="scope_isolate" type="checkbox" name="scopes[]" value="isolate:execute" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                         <div>
                                             <span class="text-xs font-semibold text-slate-700 block">Isolate & Restore</span>
                                             <span class="text-[10px] text-slate-400">Eksekusi isolir & pemutusan sesi PoD</span>
                                         </div>
                                     </label>
 
-                                    <label class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
-                                        <input type="checkbox" name="scopes[]" value="status:read" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                    <label for="scope_status" class="flex items-start gap-2.5 p-1.5 hover:bg-white rounded-lg transition cursor-pointer">
+                                        <input id="scope_status" type="checkbox" name="scopes[]" value="status:read" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                         <div>
                                             <span class="text-xs font-semibold text-slate-700 block">Status Monitoring</span>
                                             <span class="text-[10px] text-slate-400">Melihat user online dan statistik NAS</span>
