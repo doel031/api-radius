@@ -22,7 +22,9 @@ class GroupController extends Controller
     ];
 
     /**
-     * READ: Menampilkan daftar group beserta alias nama field
+     * Daftar Profil & Group
+     *
+     * Menampilkan daftar seluruh grup/profil FreeRADIUS beserta nilai parameter limitasi (time, upload, download) dan pemetaan grup MikroTik (`devicegroup`).
      */
     public function index()
     {
@@ -67,7 +69,9 @@ class GroupController extends Controller
     }
 
     /**
-     * CREATE: Membuat group baru menggunakan field alias (devicegroup, Time, Upload, Download)
+     * Tambah Profil / Group Baru
+     *
+     * Membuat profil paket baru pada tabel `radgroupreply`. Parameter `devicegroup` wajib diisi untuk pemetaan `Mikrotik-Group`. Parameter `time` (detik), `upload` (bytes), dan `download` (bytes) bersifat opsional untuk membuat paket bertipe voucher/kuota.
      */
     public function store(Request $request)
     {
@@ -169,7 +173,9 @@ class GroupController extends Controller
     }
 
     /**
-     * UPDATE: Memperbarui satu atau beberapa atribut sekaligus berdasarkan groupname
+     * Update Atribut Profil Group
+     *
+     * Memperbarui satu atau beberapa atribut (devicegroup, time, upload, download) pada profil group yang sudah ada.
      */
     public function update(Request $request, $groupname)
     {
@@ -262,7 +268,9 @@ class GroupController extends Controller
     }
 
     /**
-     * DELETE: Menghapus seluruh atribut dalam satu group berdasarkan groupname
+     * Hapus Profil Group
+     *
+     * Menghapus seluruh atribut dan konfigurasi profil group dari tabel `radgroupreply`.
      */
     public function destroy($groupname)
     {

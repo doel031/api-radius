@@ -13,11 +13,19 @@ use Illuminate\Support\Facades\Log;
 class IsolateController extends Controller
 {
     /**
-     * Endpoint Restore Bulk Users dengan Payload Dynamic Key
-     * Format Key: original_group_1, username_1, original_group_2, username_2, dst.
+     * Restore Profil Bulk Users
+     *
+     * Mengembalikan profil paket sekelompok pengguna ke profil semula menggunakan pasangan key dinamis (`original_group_1`, `username_1`, `original_group_2`, `username_2`, dst).
+     * Jika pengguna sedang online di radacct, sistem otomatis mengirimkan Packet of Disconnect (PoD) ke IP NAS agar profil baru langsung aktif seketika.
      */
     public function restore(Request $request)
     {
+        $request->validate([
+            'original_group_1' => 'nullable|string',
+            'username_1'       => 'nullable|array',
+            'username_1.*'     => 'string',
+        ]);
+
         $payload = $request->all();
 
         // 1. Extract dan pasangkan original_group dengan list username secara dinamis
@@ -96,7 +104,10 @@ class IsolateController extends Controller
     }
 
     /**
-     * Endpoint Isolate Users (Array of Users)
+     * Isolir Bulk Users
+     *
+     * Memindahkan satu atau beberapa pengguna ke profil isolasi (default: ISOLATE).
+     * Jika pengguna sedang online di radacct, sistem otomatis mengirimkan Packet of Disconnect (PoD) ke IP NAS agar sesi segera diputus dan pengguna terisolasi saat login kembali.
      */
     public function isolate(Request $request)
     {

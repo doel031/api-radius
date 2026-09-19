@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 class NasController extends Controller
 {
     /**
-     * Display a listing of the NAS records with search & pagination.
+     * Daftar Router NAS
+     *
+     * Mengambil seluruh daftar router / NAS FreeRADIUS yang terdaftar. Mendukung query parameter `search` untuk mencari berdasarkan IP (`nasname`) atau nama pendek (`shortname`).
      */
     public function index(Request $request): JsonResponse
     {
@@ -37,7 +39,9 @@ class NasController extends Controller
     }
 
     /**
-     * Store a newly created NAS in storage.
+     * Tambah Router NAS Baru
+     *
+     * Mendaftarkan router client baru ke tabel `nas` FreeRADIUS. Operasi ini otomatis memicu hot-reload service FreeRADIUS di latar belakang tanpa memutus koneksi aktif.
      */
     public function store(StoreNasRequest $request): JsonResponse
     {
@@ -52,7 +56,9 @@ class NasController extends Controller
     }
 
     /**
-     * Display the specified NAS.
+     * Detail Router NAS
+     *
+     * Mengambil informasi detail satu router NAS berdasarkan ID.
      */
     public function show($id): JsonResponse
     {
@@ -73,7 +79,9 @@ class NasController extends Controller
     }
 
     /**
-     * Update the specified NAS in storage.
+     * Update Router NAS
+     *
+     * Memperbarui konfigurasi router NAS (seperti secret, ports, shortname). Operasi ini otomatis memicu reload service FreeRADIUS di latar belakang.
      */
     public function update(UpdateNasRequest $request, $id): JsonResponse
     {
@@ -97,7 +105,9 @@ class NasController extends Controller
     }
 
     /**
-     * Remove the specified NAS from storage.
+     * Hapus Router NAS
+     *
+     * Menghapus router NAS dari database dan otomatis memicu reload service FreeRADIUS.
      */
     public function destroy($id): JsonResponse
     {

@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class StatusController extends Controller
 {
-    // Status NAS dan jumlah koneksi aktif per NAS
-    public function nasStatus() {
+    /**
+     * Status NAS & Sesi Aktif
+     *
+     * Mengambil daftar seluruh perangkat NAS / Router yang terdaftar beserta jumlah sesi pengguna yang sedang aktif terkoneksi saat ini.
+     */
+    public function nasStatus(): JsonResponse
+    {
         $nasList = DB::table('nas')
-            ->leftJoin('radacct', function($join) {
+            ->leftJoin('radacct', function ($join) {
                 $join->on('nas.nasname', '=', 'radacct.nasipaddress')
                      ->whereNull('radacct.acctstoptime');
             })
@@ -21,8 +27,13 @@ class StatusController extends Controller
         return response()->json($nasList);
     }
 
-    // Daftar user yang sedang online beserta profilnya
-    public function onlineUsers() {
+    /**
+     * Daftar User Online
+     *
+     * Mengambil daftar seluruh pengguna PPPoE/Hotspot yang sedang online (sesi aktif pada tabel radacct) beserta alamat IP, MAC Address, router NAS, waktu login, dan profil grupnya.
+     */
+    public function onlineUsers(): JsonResponse
+    {
         $onlineUsers = DB::table('radacct')
             ->leftJoin('radusergroup', 'radacct.username', '=', 'radusergroup.username')
             ->whereNull('radacct.acctstoptime')
@@ -31,14 +42,14 @@ class StatusController extends Controller
                 'radacct.nasipaddress',
                 'radacct.framedipaddress',
                 'radacct.acctstarttime',
-                'radacct.callingstationid', // MAC Address / Phone number
-                DB::raw('COALESCE(radusergroup.groupname, "default") as profile') // Mengambil groupname sebagai profile
+                'radacct.callingstationid',
+                DB::raw('COALESCE(radusergroup.groupname, "default") as profile')
             )
             ->get();
 
         return response()->json([
             'total_online' => $onlineUsers->count(),
-            'users' => $onlineUsers
+            'users'        => $onlineUsers,
         ]);
     }
 }

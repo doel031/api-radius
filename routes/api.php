@@ -11,18 +11,18 @@ use App\Http\Middleware\HmacAuthenticate;
 Route::prefix('v1')->group(function () {
     Route::middleware([HmacAuthenticate::class])->group(function () {
         // 1. NAS API (CRUD)
-        Route::apiResource('nas', NasController::class);
+        Route::apiResource('nas', NasController::class)->parameters(['nas' => 'id']);
 
         // 2. GROUP API (CRUD)
         Route::prefix('groups')->group(function () {
-            Route::get('/', [GroupController::class, 'index']);          // Read
-            Route::post('/', [GroupController::class, 'store']);         // Create
-            Route::put('/{groupname}', [GroupController::class, 'update']); // Update attribute
-            Route::delete('/{groupname}', [GroupController::class, 'destroy']); // Delete group
+            Route::get('/', [GroupController::class, 'index']);
+            Route::post('/', [GroupController::class, 'store']);
+            Route::put('/{groupname}', [GroupController::class, 'update']);
+            Route::delete('/{groupname}', [GroupController::class, 'destroy']);
         });
 
         // 3. USER API (CRUD)
-        Route::apiResource('users', UserController::class);
+        Route::apiResource('users', UserController::class)->parameters(['users' => 'username']);
 
         // 4. ISOLATE API
         Route::post('/isolate', [IsolateController::class, 'isolate']);
