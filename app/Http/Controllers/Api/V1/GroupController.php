@@ -35,13 +35,15 @@ class GroupController extends Controller
         $grouped = $records->groupBy('groupname')->map(function ($items, $groupName) {
             $attributes = $items->pluck('value', 'attribute')->toArray();
 
-            $hasVoucherAttr = array_key_exists('Max-All-Session', $attributes) ||
-                              array_key_exists('Mikrotik-Xmit-Limit', $attributes) ||
-                              array_key_exists('Mikrotik-Recv-Limit', $attributes);
+            // Cek apakah ada atribut limit/session yang bernilai > 0
+            $hasTimeLimit     = isset($attributes['Max-All-Session']) && (float) $attributes['Max-All-Session'] > 0;
+            $hasUploadLimit   = isset($attributes['Mikrotik-Xmit-Limit']) && (float) $attributes['Mikrotik-Xmit-Limit'] > 0;
+            $hasDownloadLimit = isset($attributes['Mikrotik-Recv-Limit']) && (float) $attributes['Mikrotik-Recv-Limit'] > 0;
 
-            $hasNormalAttr = array_key_exists('Mikrotik-Group', $attributes);
+            $hasVoucherAttr = $hasTimeLimit || $hasUploadLimit || $hasDownloadLimit;
+            $hasNormalAttr  = array_key_exists('Mikrotik-Group', $attributes);
 
-            // Jika punya atribut limit/session MAKA Tipe Voucher, jika hanya Group MAKA Normal
+            // Jika punya atribut limit/session > 0 MAKA Tipe Voucher, jika hanya Group MAKA Normal
             $type = $hasVoucherAttr ? 'voucher' : ($hasNormalAttr ? 'normal' : 'unknown');
 
             // Mengambil nilai created_at dan updated_at terbaru di antara baris-baris dalam group ini
@@ -49,14 +51,14 @@ class GroupController extends Controller
             $latestUpdate = $items->max('updated_at');
 
             return [
-                'groupname' => $groupName,
-                'type'      => $type,
-                'devicegroup'     => $attributes['Mikrotik-Group'] ?? null,
-                'time'      => $attributes['Max-All-Session'] ?? 0,
-                'upload'    => $attributes['Mikrotik-Xmit-Limit'] ?? 0,
-                'download'  => $attributes['Mikrotik-Recv-Limit'] ?? 0,
+                'groupname'   => $groupName,
+                'type'        => $type,
+                'devicegroup' => $attributes['Mikrotik-Group'] ?? null,
+                'time'        => $hasTimeLimit ? (int) $attributes['Max-All-Session'] : 0,
+                'upload'      => $hasUploadLimit ? (int) $attributes['Mikrotik-Xmit-Limit'] : 0,
+                'download'    => $hasDownloadLimit ? (int) $attributes['Mikrotik-Recv-Limit'] : 0,
                 // Hanya tampilkan updated_at di JSON response
-                'last_updated'  => $latestUpdate ? \Carbon\Carbon::parse($latestUpdate)->toDateTimeString() : \Carbon\Carbon::parse($latestCreate)->toDateTimeString(),
+                'last_updated' => $latestUpdate ? \Carbon\Carbon::parse($latestUpdate)->toDateTimeString() : \Carbon\Carbon::parse($latestCreate)->toDateTimeString(),
             ];
         })->values();
 
@@ -71,7 +73,7 @@ class GroupController extends Controller
     /**
      * Tambah Profil / Group Baru
      *
-     * Membuat profil paket baru pada tabel `radgroupreply`. Parameter `devicegroup` wajib diisi untuk pemetaan `Mikrotik-Group`. Parameter `time` (detik), `upload` (bytes), dan `download` (bytes) bersifat opsional untuk membuat paket bertipe voucher/kuota.
+     * Membuat profil paket baru pada tabel `radgroupreply`. Parameter `devicegroup` wajib diisi untuk pemetaan `Mikrotik-Group`. Parameter `time` (detik), `upload` (bytes), dan `download` (bytes) bersifat opsional untuk membuat paket bertipe voucher/kuota (> 0). Jika dikosongkan atau bernilai 0, paket otomatis bertipe normal (unlimited) tanpa menyimpan atribut batas ke database.
      */
     public function store(Request $request)
     {
@@ -79,9 +81,9 @@ class GroupController extends Controller
         $validated = $request->validate([
             'groupname'   => 'required|string|max:64',
             'devicegroup' => 'required|string|max:64',
-            'time'        => 'nullable|numeric',
-            'upload'      => 'nullable|numeric',
-            'download'    => 'nullable|numeric',
+            'time'        => 'nullable|numeric|min:0',
+            'upload'      => 'nullable|numeric|min:0',
+            'download'    => 'nullable|numeric|min:0',
         ]);
 
         // 2. Cek apakah groupname sudah terdaftar di database
@@ -93,9 +95,10 @@ class GroupController extends Controller
             ], 422);
         }
 
-        $hasTime     = !is_null($request->input('time')) && $request->input('time') !== '';
-        $hasUpload   = !is_null($request->input('upload')) && $request->input('upload') !== '';
-        $hasDownload = !is_null($request->input('download')) && $request->input('download') !== '';
+        // Hanya anggap sebagai limit voucher jika nilainya > 0
+        $hasTime     = !empty($request->input('time')) && (float) $request->input('time') > 0;
+        $hasUpload   = !empty($request->input('upload')) && (float) $request->input('upload') > 0;
+        $hasDownload = !empty($request->input('download')) && (float) $request->input('download') > 0;
 
         $isVoucher = $hasTime || $hasUpload || $hasDownload;
         $now = now();
@@ -107,41 +110,41 @@ class GroupController extends Controller
 
             // 1. Simpan 'Group' (Mikrotik-Group) -> Selalu Wajib untuk Normal & Voucher
             $recordsToInsert[] = [
-                'groupname' => $validated['groupname'],
-                'attribute' => 'Mikrotik-Group',
-                'op'        => ':=',
-                'value'     => $validated['devicegroup'],
-                'created_at' => $now, // Disimpan ke DB
+                'groupname'  => $validated['groupname'],
+                'attribute'  => 'Mikrotik-Group',
+                'op'         => ':=',
+                'value'      => $validated['devicegroup'],
+                'created_at' => $now,
             ];
 
-            // 2. Jika tipe Voucher, simpan atribut-atribut opsional yang dikirim
+            // 2. Jika tipe Voucher (ada limit > 0), simpan atribut-atribut batas tersebut
             if ($isVoucher) {
                 if ($hasTime) {
                     $recordsToInsert[] = [
-                        'groupname' => $validated['groupname'],
-                        'attribute' => 'Max-All-Session',
-                        'op'        => ':=',
-                        'value'     => (string) $validated['time'],
+                        'groupname'  => $validated['groupname'],
+                        'attribute'  => 'Max-All-Session',
+                        'op'         => ':=',
+                        'value'      => (string) ((int) $validated['time']),
                         'created_at' => $now,
                     ];
                 }
 
                 if ($hasUpload) {
                     $recordsToInsert[] = [
-                        'groupname' => $validated['groupname'],
-                        'attribute' => 'Mikrotik-Xmit-Limit',
-                        'op'        => ':=',
-                        'value'     => (string) $validated['upload'],
+                        'groupname'  => $validated['groupname'],
+                        'attribute'  => 'Mikrotik-Xmit-Limit',
+                        'op'         => ':=',
+                        'value'      => (string) ((int) $validated['upload']),
                         'created_at' => $now,
                     ];
                 }
 
                 if ($hasDownload) {
                     $recordsToInsert[] = [
-                        'groupname' => $validated['groupname'],
-                        'attribute' => 'Mikrotik-Recv-Limit',
-                        'op'        => ':=',
-                        'value'     => (string) $validated['download'],
+                        'groupname'  => $validated['groupname'],
+                        'attribute'  => 'Mikrotik-Recv-Limit',
+                        'op'         => ':=',
+                        'value'      => (string) ((int) $validated['download']),
                         'created_at' => $now,
                     ];
                 }
@@ -157,11 +160,11 @@ class GroupController extends Controller
                 'type'    => $isVoucher ? 'voucher' : 'normal',
                 'message' => 'Group berhasil dibuat',
                 'data'    => [
-                    'groupname' => $validated['groupname'],
-                    'devicegroup'     => $validated['devicegroup'],
-                    'time'      => $validated['time'] ?? 0,
-                    'upload'    => $validated['upload'] ?? 0,
-                    'download'  => $validated['download'] ?? 0,
+                    'groupname'   => $validated['groupname'],
+                    'devicegroup' => $validated['devicegroup'],
+                    'time'        => $hasTime ? (int) $validated['time'] : 0,
+                    'upload'      => $hasUpload ? (int) $validated['upload'] : 0,
+                    'download'    => $hasDownload ? (int) $validated['download'] : 0,
                     'created_at'  => $now->toDateTimeString(),
                 ]
             ], 201);
@@ -175,29 +178,22 @@ class GroupController extends Controller
     /**
      * Update Atribut Profil Group
      *
-     * Memperbarui satu atau beberapa atribut (devicegroup, time, upload, download) pada profil group yang sudah ada.
+     * Memperbarui satu atau beberapa atribut (devicegroup, time, upload, download) pada profil group yang sudah ada. Mengirim nilai 0, null, atau kosong pada time, upload, atau download akan menghapus atribut batas tersebut sehingga paket kembali normal/unlimited.
      */
     public function update(Request $request, $groupname)
     {
         // Validasi input (semua opsional/nullable agar fleksibel saat update)
         $validated = $request->validate([
             'devicegroup' => 'nullable|string|max:64',
-            'time'        => 'nullable|numeric',
-            'upload'      => 'nullable|numeric',
-            'download'    => 'nullable|numeric',
+            'time'        => 'nullable|numeric|min:0',
+            'upload'      => 'nullable|numeric|min:0',
+            'download'    => 'nullable|numeric|min:0',
         ]);
 
         // Cek apakah ada minimal 1 data yang dikirim untuk diupdate
-        $inputData = array_filter([
-            'devicegroup' => $request->input('devicegroup'),
-            'time'        => $request->input('time'),
-            'upload'      => $request->input('upload'),
-            'download'    => $request->input('download'),
-        ], function ($value) {
-            return !is_null($value) && $value !== '';
-        });
+        $hasAnyInput = $request->hasAny(['devicegroup', 'time', 'upload', 'download']);
 
-        if (empty($inputData)) {
+        if (!$hasAnyInput) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Tidak ada atribut yang dikirim untuk diperbarui.'
@@ -217,21 +213,52 @@ class GroupController extends Controller
         try {
             $now = now();
 
-            // Loop dan update/create atribut yang dikirim
-            foreach ($inputData as $aliasKey => $val) {
-                $realAttribute = $this->attributeMap[$aliasKey];
-
+            // 1. Update devicegroup (Mikrotik-Group) jika dikirim
+            if ($request->has('devicegroup') && !is_null($request->input('devicegroup')) && $request->input('devicegroup') !== '') {
                 RadGroupReply::updateOrCreate(
                     [
                         'groupname' => $groupname,
-                        'attribute' => $realAttribute,
+                        'attribute' => 'Mikrotik-Group',
                     ],
                     [
-                        'op'        => ':=',
-                        'value'     => (string) $val,
+                        'op'         => ':=',
+                        'value'      => (string) $request->input('devicegroup'),
                         'updated_at' => $now,
                     ]
                 );
+            }
+
+            // 2. Handle limit atribut: time, upload, download
+            // Jika nilai > 0, simpan/update ke database
+            // Jika nilai 0, null, atau kosong, HAPUS baris dari radgroupreply agar kembali normal/unlimited
+            $limitFields = [
+                'time'     => 'Max-All-Session',
+                'upload'   => 'Mikrotik-Xmit-Limit',
+                'download' => 'Mikrotik-Recv-Limit',
+            ];
+
+            foreach ($limitFields as $field => $radiusAttr) {
+                if ($request->has($field)) {
+                    $val = $request->input($field);
+                    if (!is_null($val) && $val !== '' && (float) $val > 0) {
+                        RadGroupReply::updateOrCreate(
+                            [
+                                'groupname' => $groupname,
+                                'attribute' => $radiusAttr,
+                            ],
+                            [
+                                'op'         => ':=',
+                                'value'      => (string) ((int) $val),
+                                'updated_at' => $now,
+                            ]
+                        );
+                    } else {
+                        // Hapus atribut jika nilainya 0, null, atau kosong
+                        RadGroupReply::where('groupname', $groupname)
+                            ->where('attribute', $radiusAttr)
+                            ->delete();
+                    }
+                }
             }
 
             DB::commit();
@@ -243,9 +270,11 @@ class GroupController extends Controller
 
             $attributes = $updatedRecords->pluck('value', 'attribute')->toArray();
 
-            $hasVoucherAttr = array_key_exists('Max-All-Session', $attributes) ||
-                              array_key_exists('Mikrotik-Xmit-Limit', $attributes) ||
-                              array_key_exists('Mikrotik-Recv-Limit', $attributes);
+            $hasTimeLimit     = isset($attributes['Max-All-Session']) && (float) $attributes['Max-All-Session'] > 0;
+            $hasUploadLimit   = isset($attributes['Mikrotik-Xmit-Limit']) && (float) $attributes['Mikrotik-Xmit-Limit'] > 0;
+            $hasDownloadLimit = isset($attributes['Mikrotik-Recv-Limit']) && (float) $attributes['Mikrotik-Recv-Limit'] > 0;
+
+            $hasVoucherAttr = $hasTimeLimit || $hasUploadLimit || $hasDownloadLimit;
 
             return response()->json([
                 'status'  => 'success',
@@ -254,9 +283,9 @@ class GroupController extends Controller
                 'data'    => [
                     'groupname'   => $groupname,
                     'devicegroup' => $attributes['Mikrotik-Group'] ?? null,
-                    'time'        => $attributes['Max-All-Session'] ?? 0,
-                    'upload'      => $attributes['Mikrotik-Xmit-Limit'] ?? 0,
-                    'download'    => $attributes['Mikrotik-Recv-Limit'] ?? 0,
+                    'time'        => $hasTimeLimit ? (int) $attributes['Max-All-Session'] : 0,
+                    'upload'      => $hasUploadLimit ? (int) $attributes['Mikrotik-Xmit-Limit'] : 0,
+                    'download'    => $hasDownloadLimit ? (int) $attributes['Mikrotik-Recv-Limit'] : 0,
                     'updated_at'  => $now->toDateTimeString(),
                 ]
             ]);
